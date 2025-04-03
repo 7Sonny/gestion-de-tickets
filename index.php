@@ -1,0 +1,103 @@
+    <?php
+    session_start();
+    require 'vendor/autoload.php';
+
+    use Controllers\HomeController;
+    use Controllers\UserController;
+    use Controllers\TicketController;
+    use Controllers\ReportController;
+    use Database\Database;
+    use Middlewares\AuthMiddleware;
+
+    // Créer une instance du routeur
+    $router = new AltoRouter();
+
+    // Définir le chemin de base
+    $router->setBasePath('/litemvc');
+
+
+
+
+    // Définir les routes
+    $router->map('GET', '/', function () {
+        $db = Database::getInstance();
+        $homeController = new HomeController($db);
+        $homeController->index();
+    });
+
+   
+
+    // inscription
+    $router->map('GET', '/inscription', function () {
+        
+        $db = Database::getInstance();
+        $userController = new UserController($db);
+        $userController->inscription();
+    });
+    $router->map('POST', '/inscription', function () {
+        
+        $db = Database::getInstance();
+        $userController = new UserController($db);
+        $userController->inscription(); 
+    });
+
+    // connection
+    $router->map('GET', '/connection', function () {
+        
+        $db = Database::getInstance();
+        $userController = new UserController($db);
+        $userController->index();
+    });
+    $router->map('GET', '/deconnection', function () {
+        $db = Database::getInstance();
+        $userController = new UserController($db);
+        $userController ->deconnection();
+    });
+    $router->map('POST', '/connection', function () {
+        
+        $db = Database::getInstance();
+        $userController = new UserController($db);
+        $userController->connection();
+    });
+
+    // route Admin
+    $router->map('GET', '/admin', function () {
+      
+        AuthMiddleware::auth();
+        $db = Database::getInstance();
+        $userController = new UserController($db);
+        $userController->admin();
+    });
+    $router->map('POST', '/create_ticket', function () {
+      
+        AuthMiddleware::auth();
+        $db = Database::getInstance();
+        $ticketController = new TicketController($db);
+        $ticketController->create_ticket();
+    });
+    $router->map("POST", "/assign_ticket", function (){
+        AuthMiddleware::auth();
+        $db = Database::getInstance();
+        $ticketController = new TicketController($db);
+        $ticketController->assign_ticket();
+    });
+    $router->map("POST", "/update_report", function (){
+        AuthMiddleware::auth();
+        $db = Database::getInstance();
+        $ReportController = new ReportController($db);
+        $ReportController->update_report();
+    });
+    // Matcher et gérer la requête
+    $match = $router->match();
+
+    if (is_array($match) && is_callable($match['target'])) {
+        // Débogage des paramètres de la route
+        
+
+        // Appeler la fonction cible
+        call_user_func_array($match['target'], $match['params']);
+    } else {
+        // Aucun chemin correspondant, renvoyer une erreur 404
+         ($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+        echo 'Page introuvable.';
+    }
